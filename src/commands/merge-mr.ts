@@ -3,13 +3,19 @@ import { Gitlab } from '@gitbeaker/rest';
 
 import chalk from 'chalk';
 import { BaseCommandOptions } from '../lib/types.js';
-import { getMRSourceBranchName } from '../lib/upsert-branch.js';
+import { createMRSourceBranchName } from '../lib/upsert-branch.js';
 import { parseBooleanEnvVar } from '../lib/parse-boolean-env-var.js';
 
-interface MergeMROptions extends BaseCommandOptions {
-  githubRepositorySHA: string;
-}
-
+/**
+ * Merge GitLab MR for the branch related to the GitHub repository
+ *
+ * @param gitlabProjectId GitLab project ID, e.g. `123` or `group/project`
+ * @param gitlabTargetBranch Target branch name in GitLab to merge the MR into
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param githubRepositorySHA SHA of the latest commit to be used in the submodule update job
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ * @param gitlabOptions GitLab options to authenticate and connect to the API
+ */
 export async function mergeMr({
   gitlabProjectId,
   gitlabTargetBranch,
@@ -17,9 +23,9 @@ export async function mergeMr({
   githubRepositorySHA,
   githubProjectSubmoduleName,
   gitlabOptions,
-}: MergeMROptions) {
+}: BaseCommandOptions) {
   const gitlab = new Gitlab(gitlabOptions);
-  const gitlabSourceBranch = getMRSourceBranchName({
+  const gitlabSourceBranch = createMRSourceBranchName({
     githubProjectSubmoduleName,
     githubRepositoryBranch,
   });

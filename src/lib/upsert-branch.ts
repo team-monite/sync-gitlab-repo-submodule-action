@@ -3,12 +3,25 @@ import path from 'node:path';
 import { simpleGit } from 'simple-git';
 import chalk from 'chalk';
 import { TempDir } from './temp-dir.js';
-import { BaseCheckoutBranchOptions } from './types.js';
+import { BaseCommandOptions } from './types.js';
 
-export interface UpsertBranchOptions extends BaseCheckoutBranchOptions {
+export interface UpsertBranchOptions extends BaseCommandOptions {
+  /** Branch name in the GiLab repository to create the MR from */
   gitlabSourceBranch: string;
 }
 
+/**
+ * Creates a new branch in the GitLab repository, or updates an existing one
+ *
+ * @param gitlabProjectId GitLab project ID, e.g. `123` or `group/project`
+ * @param gitlabTargetBranch Target branch name in GitLab to merge the MR into
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param githubRepositorySHA SHA of the last branch commit to be used in the submodule update task
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ * @param gitlabSourceBranch Source branch name in GitLab to create the MR from
+ * @param gitlabOptions GitLab options to authenticate and connect to the API
+ * @param commitMessageSalt Salt to identify the commits related to the submodule sync
+ */
 export async function upsertBranch(
   {
     gitlabProjectId,
@@ -65,6 +78,13 @@ export async function upsertBranch(
   });
 }
 
+/**
+ * Clones the GitLab repository to the temporary directory
+ *
+ * @param repoBaseDir Base directory to clone the repository into
+ * @param gitlabProjectId GitLab project ID, e.g. `123` or `group/project`
+ * @param gitlabOptions GitLab options to authenticate and connect to the API
+ */
 async function cloneGitlabRepo(
   repoBaseDir: string,
   {
@@ -120,6 +140,13 @@ async function cloneGitlabRepo(
   });
 }
 
+/**
+ * "Git Checkout" the branch related to the GitHub repository branch
+ * @param repoBaseDir Base directory of the Git repository
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param gitlabTargetBranch Target branch name in GitLab to merge the MR into
+ * @param gitlabSourceBranch Source branch name in GitLab to create the MR from
+ */
 async function checkoutGitlabSourceBranch(
   repoBaseDir: string,
   {
@@ -178,12 +205,21 @@ async function checkoutGitlabSourceBranch(
     });
 }
 
+/**
+ * Validates if the GitLab branch related to the GitHub repository branch is in sync with the submodule
+ *
+ * @param repoBaseDir Base directory of the Git repository
+ * @param gitlabTargetBranch Target branch name in GitLab to merge the MR into
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param gitlabSourceBranch Source branch name in GitLab to create the MR from
+ * @param commitMessageSalt Salt to identify the commits related to the submodule sync
+ */
 async function validateIsSubmoduleSyncBranch({
   repoBaseDir,
-  commitMessageSalt,
   gitlabTargetBranch,
   githubRepositoryBranch,
   gitlabSourceBranch,
+  commitMessageSalt,
 }: {
   repoBaseDir: string;
   commitMessageSalt: string;
@@ -232,6 +268,16 @@ async function validateIsSubmoduleSyncBranch({
   }
 }
 
+/**
+ * Resets the GitLab branch related to the GitHub repository branch to the state
+ * of the target branch (e.g. `main` in GitLab)
+ *
+ * @param repoBaseDir
+ * @param gitlabTargetBranch
+ * @param githubRepositoryBranch
+ * @param gitlabSourceBranch
+ * @param commitMessageSalt
+ */
 async function resetGitlabRepoBranch({
   repoBaseDir,
   gitlabTargetBranch,
@@ -271,6 +317,12 @@ async function resetGitlabRepoBranch({
     });
 }
 
+/**
+ * Gets the submodule path from submodule name
+ *
+ * @param repoBaseDir Base directory of the Git repository
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ */
 async function getSubmodulePath({
   repoBaseDir,
   githubProjectSubmoduleName,
@@ -300,6 +352,12 @@ async function getSubmodulePath({
   return submodulePath;
 }
 
+/**
+ * Gets the latest commit SHA of the branch from the submodule
+ *
+ * @param baseDir Base directory of the Git repository
+ * @param branch Branch name in the submodule
+ */
 async function getRepoBranchHeadSHA({
   baseDir,
   branch,
@@ -328,6 +386,14 @@ async function getRepoBranchHeadSHA({
     );
 }
 
+/**
+ * "Git Checkout" the submodule branch
+ *
+ * @param repoBaseDir Base directory of the Git repository
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param githubRepositorySHA SHA of the last branch commit to be used in the submodule update task
+ */
 async function checkoutSubmoduleBranch({
   repoBaseDir,
   githubProjectSubmoduleName,
@@ -435,6 +501,14 @@ async function checkoutSubmoduleBranch({
   }
 }
 
+/**
+ * Commits the changes in the GitLab repository related to the GitHub repository branch
+ *
+ * @param repoBaseDir Base directory of the Git repository
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param commitMessageSalt Salt to identify the commits related to the submodule sync
+ */
 async function commitGitlabRepoChanges({
   repoBaseDir,
   githubProjectSubmoduleName,
@@ -482,6 +556,13 @@ async function commitGitlabRepoChanges({
     });
 }
 
+/**
+ * Pushes the changes in the GitLab repository related to the GitHub repository branch
+ *
+ * @param repoBaseDir Base directory of the Git repository
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param gitlabSourceBranch Source branch name in GitLab to create the MR from
+ */
 async function pushGitlabRepoChanges({
   repoBaseDir,
   githubRepositoryBranch,
@@ -518,7 +599,13 @@ async function pushGitlabRepoChanges({
   );
 }
 
-export function getMRSourceBranchName({
+/**
+ * Creates the "source branch" for the GitLab MR
+ *
+ * @param githubProjectSubmoduleName
+ * @param githubRepositoryBranch
+ */
+export function createMRSourceBranchName({
   githubProjectSubmoduleName,
   githubRepositoryBranch,
 }: Pick<

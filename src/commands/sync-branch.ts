@@ -2,10 +2,23 @@ import { Gitlab } from '@gitbeaker/rest';
 
 import chalk from 'chalk';
 
-import { getMRSourceBranchName, upsertBranch } from '../lib/upsert-branch.js';
-import { BaseCheckoutBranchOptions } from '../lib/types.js';
+import {
+  createMRSourceBranchName,
+  upsertBranch,
+} from '../lib/upsert-branch.js';
+import { BaseCommandOptions } from '../lib/types.js';
 import { EditMergeRequestOptions } from '@gitbeaker/core';
 
+/**
+ * Creates a new GitLab Merge Request for the branch related to the GitHub repository
+ *
+ * @param gitlabProjectId GitLab project ID, e.g. `123` or `group/project`
+ * @param gitlabTargetBranch Target branch name in GitLab to merge the MR into
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is used as a submodule
+ * @param githubRepositorySHA SHA of the last branch commit to be used in the submodule update task
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ * @param gitlabOptions GitLab options to authenticate and connect to the API
+ */
 export async function syncBranch({
   gitlabProjectId,
   gitlabTargetBranch,
@@ -13,8 +26,8 @@ export async function syncBranch({
   githubRepositorySHA,
   githubProjectSubmoduleName,
   gitlabOptions,
-}: BaseCheckoutBranchOptions) {
-  const gitlabSourceBranch = getMRSourceBranchName({
+}: BaseCommandOptions) {
+  const gitlabSourceBranch = createMRSourceBranchName({
     githubProjectSubmoduleName,
     githubRepositoryBranch,
   });
@@ -97,6 +110,9 @@ export async function syncBranch({
   );
 }
 
+/**
+ * Returns the GitHub Pull Request URL from the environment variables
+ */
 function getGithubPullRequestUrl() {
   try {
     const prUrl =
@@ -109,12 +125,19 @@ function getGithubPullRequestUrl() {
   }
 }
 
+/**
+ * Creates the GitLab Merge Request title and description
+ *
+ * @param githubRepositorySHA SHA of the last branch commit to be used in MR description
+ * @param githubRepositoryBranch Branch name in the GitHub repository which is described in the MR title
+ * @param githubProjectSubmoduleName Submodule name in the GitLab project, e.g. `my-sdk`
+ */
 function createGitlabMergeRequestInfo({
   githubRepositorySHA,
   githubRepositoryBranch,
   githubProjectSubmoduleName,
 }: Pick<
-  BaseCheckoutBranchOptions,
+  BaseCommandOptions,
   | 'githubRepositoryBranch'
   | 'githubRepositorySHA'
   | 'githubProjectSubmoduleName'
