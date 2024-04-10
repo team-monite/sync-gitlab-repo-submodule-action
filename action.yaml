@@ -1,0 +1,54 @@
+name: "Sync GitLab Project"
+description: "Syncs remote GitLab project with the repository add as a submodule"
+inputs:
+  action:
+    description: 'Action to perform: `sync-branch | merge-mr`'
+    required: true
+  gitlab_token:
+    description: 'GitLab Personal Access Token'
+    required: true
+  gitlab_host:
+    description: 'GitLab host. Example: `https://gitlab.com`'
+    required: true
+  gitlab_project_id:
+    description: 'GitLab Project ID. Example: `my-org/my-team/my-project`'
+    required: true
+  gitlab_target_branch:
+    description: 'Target branch name in GitLab to merge the MR. Used to create MR in `sync-branch` action, and to merge MR in `merge-mr` action'
+    required: true
+  submodule_name:
+    description: 'Name of the submodule to sync with GitLab'
+    required: true
+  branch:
+    description: 'GitHub branch name to sync with GitLab'
+    required: true
+  sha:
+    description: 'SHA commit of the branch to be used in the submodule update'
+    required: true
+  gitlab_merge_when_pipeline_succeeds:
+    description: 'Merge MR when pipeline succeeds. Default: `false`'
+    required: false
+    default: 'false'
+  github_pr_url:
+    description: 'GitHub PR URL, used in GitLab MR description. Example: "$\{{ github.server_url }}/$\{{ github.repository }}/pull/$\{{ github.event.pull_request.number }}" (replace `\{{` with `{{`)'
+    required: false
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.action }}
+    - --gitlab-project-id
+    - ${{ inputs.gitlab_project_id }}
+    - --gitlab-target-branch
+    - ${{ inputs.gitlab_target_branch }}
+    - --submodule-name
+    - ${{ inputs.submodule_name }}
+    - --branch
+    - ${{ inputs.branch }}
+    - --sha
+    - ${{ inputs.sha }}
+  env:
+    GITLAB_HOST: ${{ inputs.gitlab_host }}
+    GITLAB_TOKEN: ${{ inputs.gitlab_token }}
+    GITLAB_MERGE_WHEN_PIPELINE_SUCCEEDS: ${{ inputs.gitlab_merge_when_pipeline_succeeds }}
+    GITHUB_PR_URL: ${{ inputs.github_pr_url }}
