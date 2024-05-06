@@ -249,16 +249,18 @@ async function validateIsSubmoduleSyncBranch({
     });
 
   if (
-    log.all.some((logItem) =>
-      new RegExp(`\b${commitMessageSalt}\b`).test(logItem)
+    log.all.some(
+      (logItem) => !new RegExp(`\b${commitMessageSalt}\b`).test(logItem)
     )
   ) {
     console.error(
       chalk.red(
-        `✖︎ Branch from origin related to the GitHub repository branch "${githubRepositoryBranch} has commits without '${commitMessageSalt}' in the commit message`,
-        `Therefore, the script cannot proceed with the sync process.`,
-        `🤔 The way to resolve this issue are:`,
-        `Delete the origin branch related to the GitHub repository branch "${githubRepositoryBranch}" and run the Job again.`
+        [
+          `✖︎ Branch from origin related to the GitHub repository branch "${githubRepositoryBranch} has commits without '${commitMessageSalt}' in the commit message`,
+          `Therefore, the script cannot proceed with the sync process.`,
+          `🤔 The way to resolve this issue are:`,
+          `Delete the origin branch related to the GitHub repository branch "${githubRepositoryBranch}" and run the Job again.`,
+        ].join('\n')
       )
     );
 
