@@ -96,3 +96,46 @@ jobs:
           sha: ${{ github.event.pull_request.head.sha }} # The SHA of the merged branch ^HEAD
           gitlab_merge_when_pipeline_succeeds: 'false' # Optional, useful for merge requests with pipelines
 ```
+
+## CLI
+
+### Setup
+
+```bash
+yarn install
+yarn build
+```
+
+### Usage
+
+```text
+$ yarn sync-gitlab-repo-submodule-action [options] [command]
+
+Options:
+  -h, --help             display help for command
+
+Commands:
+  sync-branch [options]
+  merge-mr [options]
+  help [command]         display help for command
+```
+
+### Examples
+
+#### Sync Branch
+
+Create a GitLab MR for the GitHub branch `feature/test-01` with the SHA `cc8081627592e2400a5a7c8429366ae0fd636480` in the GitLab repository `my-team/my-repo` with the submodule `my-submodule`.
+
+```bash
+yarn sync-gitlab-repo-submodule-action sync-branch -p "my-team/my-repo" -b "feature/test-01" \
+  --gitlab-target-branch "master" --sha cc8081627592e2400a5a7c8429366ae0fd636480 --submodule-name my-submodule
+```
+
+#### Merge MR
+
+Merge the GitLab MR for the GitHub branch `feature/test-01` with the SHA `cc8081627592e2400a5a7c8429366ae0fd636480` in the GitLab repository `my-team/my-repo` with the submodule `monite-sdk`.
+
+```bash
+yarn sync-gitlab-repo-submodule-action merge-mr -p "my-team/my-repo" -b "feature/test-01" \
+  --gitlab-target-branch "master" --sha cc8081627592e2400a5a7c8429366ae0fd636480 --submodule-name monite-sdk
+```
