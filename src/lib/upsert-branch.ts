@@ -49,6 +49,14 @@ export async function upsertBranch(
     gitlabSourceBranch,
   });
 
+  await validateIsSubmoduleSyncBranch({
+    repoBaseDir,
+    gitlabTargetBranch,
+    githubRepositoryBranch,
+    commitMessageSalt,
+    gitlabSourceBranch,
+  });
+
   await resetGitlabRepoBranch({
     repoBaseDir,
     gitlabTargetBranch,
@@ -284,15 +292,11 @@ async function validateIsSubmoduleSyncBranch({
  * @param repoBaseDir
  * @param gitlabTargetBranch
  * @param githubRepositoryBranch
- * @param gitlabSourceBranch
- * @param commitMessageSalt
  */
 async function resetGitlabRepoBranch({
   repoBaseDir,
   gitlabTargetBranch,
   githubRepositoryBranch,
-  gitlabSourceBranch,
-  commitMessageSalt,
 }: {
   repoBaseDir: string;
   commitMessageSalt: string;
@@ -300,14 +304,6 @@ async function resetGitlabRepoBranch({
   UpsertBranchOptions,
   'gitlabTargetBranch' | 'githubRepositoryBranch' | 'gitlabSourceBranch'
 >) {
-  await validateIsSubmoduleSyncBranch({
-    repoBaseDir,
-    gitlabTargetBranch,
-    githubRepositoryBranch,
-    commitMessageSalt,
-    gitlabSourceBranch,
-  });
-
   const git = simpleGit({
     baseDir: repoBaseDir,
   });
