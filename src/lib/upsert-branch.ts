@@ -238,7 +238,7 @@ async function validateIsSubmoduleSyncBranch({
   });
 
   const log = await git
-    .log({
+    .log<{ message: string } | string>({
       from: `origin/${gitlabTargetBranch}`,
       to: gitlabSourceBranch,
       format: '%s',
@@ -249,9 +249,16 @@ async function validateIsSubmoduleSyncBranch({
     });
 
   if (
-    log.all.some(
-      (logItem) => !new RegExp(`\b${commitMessageSalt}\b`).test(logItem)
-    )
+    log.all.some((logItem) => {
+      const logComment =
+        typeof logItem === 'string' ? logItem : logItem.message;
+      if (typeof logComment !== 'string')
+        throw new Error('Invalid log comment');
+      const hasAutoSyncCommitMessageSalt = new RegExp(
+        `\\b${commitMessageSalt}\\b`
+      ).test(logComment);
+      return !hasAutoSyncCommitMessageSalt;
+    })
   ) {
     console.error(
       chalk.red(
