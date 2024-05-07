@@ -256,18 +256,18 @@ async function validateIsSubmoduleSyncBranch({
       throw new Error('✖︎ Failed to get log from Git');
     });
 
-  if (
-    log.all.some((logItem) => {
-      const logComment =
-        typeof logItem === 'string' ? logItem : logItem.message;
-      if (typeof logComment !== 'string')
-        throw new Error('Invalid log comment');
-      const hasAutoSyncCommitMessageSalt = new RegExp(
-        `\\b${commitMessageSalt}\\b`
-      ).test(logComment);
-      return !hasAutoSyncCommitMessageSalt;
-    })
-  ) {
+  for (const logItem of log.all) {
+    const logComment = typeof logItem === 'string' ? logItem : logItem.message;
+
+    if (typeof logComment !== 'string') throw new Error('Invalid log comment');
+
+    const hasAutoSyncCommitMessageSalt = new RegExp(
+      `\\b${commitMessageSalt}\\b`,
+      'g'
+    ).test(logComment);
+
+    if (hasAutoSyncCommitMessageSalt) continue;
+
     console.error(
       chalk.red(
         [
