@@ -249,7 +249,7 @@ async function validateIsSubmoduleSyncBranch({
     .log<{ message: string } | string>({
       from: `origin/${gitlabTargetBranch}`,
       to: gitlabSourceBranch,
-      format: '%s',
+      symmetric: false,
     })
     .catch(() => {
       // suppress Git errors as they could contain sensitive data
